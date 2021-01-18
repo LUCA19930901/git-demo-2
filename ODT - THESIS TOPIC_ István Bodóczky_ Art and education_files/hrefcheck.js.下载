@@ -1,0 +1,115 @@
+    (function($) {
+    //a plugin fuggveny
+//      $.fn.extend({
+//        pathfusion_menu: function(options)
+//        {
+      $.fn.hrefcheck = function(options)
+        {
+          //default options
+          var defaults ={
+                          autorun : false,
+                          classname : 'kozlurl_res',
+                          text_checking: 'Ellenorzés...',
+                          text_ok: 'URL Rendben',
+                          text_nok: 'Hibás URL'
+                        };
+          var options = $.extend(defaults, options);
+          //valtozok deklaralasa
+          var obj=$(this);
+//          var objname = $(obj).attr("name");
+//          var objid = $(obj).attr("id");
+//          var objclass=$(obj).attr("class");
+//          obj.find('span').each(function(index, value){
+//            $(value).css('position','absolute');
+//          });
+
+          //variables, events, css properties - init
+          return this.each(function(index, value)
+          {
+            initialize(value);
+          });
+
+        //privat fuggvenyek, hogy ne 'szemeteljuk tele' a jQuery-t
+        /**
+         * Beallitja az alap valtozokat es az esemeny hozzarendeleseket elvegzi.
+         */
+        function initialize(o)
+        {
+          if (options.autorun==true)
+          {
+            $(o).find("A").each(function(index, value){
+              checkit($(value));
+            });
+          }
+          else
+          {
+            $(o).find("A").hover(
+              function(){ checkit($(this)); },
+              function(){/*mouse out*/});
+          }
+        }
+        /**
+         * leellenorzi az adott linket
+         */
+        function checkit(link){
+            //var link = $(this);
+            //alert(link.attr('href'));
+            //create span for result (if it does not exists)
+            var span = link.parent();
+            if (span.find("."+options.classname).length==0)
+            {
+              span.append('&nbsp;<span class="'+options.classname+'"></span>');
+            }
+            //if result span isn't empty - this link has been checked
+            var must_check = (span.find("."+options.classname).html() == '');
+            if (must_check)
+            {
+              //get URL for checking
+              $(span).find("."+options.classname).html(options.text_checking);
+              var url = '';
+              url = link/*find("A.link:first")*/.attr("href");
+              url = encodeURIComponent(url);
+              //alert(url);
+              //send ajax req
+              $.ajax({
+                type: 'GET',
+                url: 'curl.php?xr=urlchk&u='+url,
+                dataType: 'text',
+                complete: showResult
+                });
+             }
+        }
+        /**
+         * eredmeny kijelzese
+         */
+        function showResult(req)
+        {
+          // json eredmeny kiertekelese
+          var o = $.parseJSON(req.responseText);
+          //HTML objektumok hivatkozasai
+          var link = $(obj).find("A[href='"+o.URL+"']");
+          var span = link.parent();
+          //eredmeny
+          if (o.res=='1')
+          {
+            span.find("."+options.classname).html(options.text_ok);
+          }
+          else
+          {
+            span.find("."+options.classname).html(options.text_nok);
+          }
+        }
+
+      };
+      })(jQuery);
+//--------------------------------------------------------------------------------
+//$(document).ready(function()
+//  {
+//    $(".kozlurl").hrefcheck({ autorun : true,
+//                              classname : 'kozlurl_res',
+//                              text_checking: 'Ellenőrzés...',
+//                              text_ok: 'URL Rendben',
+//                              text_nok: 'Hibás URL'
+//    });
+//  });
+
